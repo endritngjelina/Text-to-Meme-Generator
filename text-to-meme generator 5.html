@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemeForge Pro - Advanced Meme Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 5px rgba(102, 126, 234, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6)); }
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .template-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .template-item:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+
+        .template-item.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .template-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .template-item .template-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 5px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .color-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-input input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: 2px solid #e1e1e1;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: #667eea;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            max-width: 600px;
+            margin: 20px;
+        }
+
+        #memeCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .text-overlay {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1.1;
+            -webkit-text-stroke: 2px black;
+            text-stroke: 2px black;
+            word-wrap: break-word;
+            min-width: 100px;
+            min-height: 30px;
+            border: 2px dashed transparent;
+            transition: all 0.2s ease;
+        }
+
+        .text-overlay:hover, .text-overlay.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .text-overlay .resize-handle {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 15px;
+            height: 15px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: se-resize;
+            border: 2px solid white;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            border: 2px solid #e1e1e1;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-left: 4px solid #667eea;
+            padding: 10px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 50vh;
+            }
+            
+            .templates-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>🎨 MemeForge Pro</h1>
+                <p style="color: #666; font-size: 0.9rem;">Professional Meme Creation Suite</p>
+            </div>
+
+            <div class="section">
+                <h3>📱 Meme Templates</h3>
+                <div class="feature-highlight">
+                    Click any template to start creating, or upload your own custom image below.
+                </div>
+                <div class="templates-grid" id="templatesGrid">
+                    <!-- Templates will be populated by JavaScript -->
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div>📁 Drop image here or click to upload</div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>✏️ Text Controls</h3>
+                <div class="input-group">
+                    <label>Top Text</label>
+                    <textarea id="topText" placeholder="Enter top text..." rows="2"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Bottom Text</label>
+                    <textarea id="bottomText" placeholder="Enter bottom text..." rows="2"></textarea>
+                </div>
+                <button class="btn btn-secondary" id="addTextBtn" style="width: 100%; margin-top: 10px;">
+                    ➕ Add Custom Text Layer
+                </button>
+            </div>
+
+            <div class="section">
+                <h3>🎨 Text Styling</h3>
+                <div class="input-group">
+                    <label>Font Size</label>
+                    <input type="range" id="fontSize" min="20" max="80" value="40">
+                    <span id="fontSizeValue">40px</span>
+                </div>
+                <div class="color-controls">
+                    <div class="color-input">
+                        <label>Text Color</label>
+                        <input type="color" id="textColor" value="#ffffff">
+                    </div>
+                    <div class="color-input">
+                        <label>Stroke Color</label>
+                        <input type="color" id="strokeColor" value="#000000">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label>Font Family</label>
+                    <select id="fontFamily">
+                        <option value="Impact">Impact</option>
+                        <option value="Arial Black">Arial Black</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🎭 Image Filters</h3>
+                <div class="filters-grid">
+                    <div class="filter-btn" data-filter="none">Original</div>
+                    <div class="filter-btn" data-filter="sepia">Vintage</div>
+                    <div class="filter-btn" data-filter="grayscale">B&W</div>
+                    <div class="filter-btn" data-filter="contrast">High Contrast</div>
+                    <div class="filter-btn" data-filter="brightness">Bright</div>
+                    <div class="filter-btn" data-filter="blur">Blur</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⚙️ Advanced Options</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <label>Watermark</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="watermarkToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="input-group">
+                    <label>Canvas Quality</label>
+                    <select id="canvasQuality">
+                        <option value="0.7">Standard (70%)</option>
+                        <option value="0.9" selected>High (90%)</option>
+                        <option value="1.0">Maximum (100%)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>💾 Export Options</h3>
+                <div class="export-options">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        📥 Download PNG
+                    </button>
+                    <button class="btn btn-secondary" id="downloadJpgBtn">
+                        📄 Download JPG
+                    </button>
+                </div>
+                <button class="btn btn-primary" id="shareBtn" style="width: 100%; margin-top: 10px;">
+                    📤 Copy to Clipboard
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="memeCanvas" width="600" height="400"></canvas>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: rgba(255, 255, 255, 0.8);">
+                <p>💡 Drag text elements to reposition • Click and drag corners to resize</p>
+                <p style="font-size: 0.9rem; margin-top: 5px;">Built with modern web technologies • Optimized for performance</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class MemeGenerator {
+            constructor() {
+                this.canvas = document.getElementById('memeCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.currentTemplate = null;
+                this.textElements = [];
+                this.selectedElement = null;
+                this.dragData = null;
+                this.resizeData = null;
+                
+                this.templates = [
+                    { name: 'Drake Meme', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzMzNzNkYyIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+RHJha2UgVGVtcGxhdGU8L3RleHQ+PC9zdmc+' },
+                    { name: 'Distracted Boyfriend', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzk5NTVmZiIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+RGlzdHJhY3RlZCBCb3lmcmllbmQ8L3RleHQ+PC9zdmc+' },
+                    { name: 'Woman Yelling', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI2ZmNTU3MyIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+V29tYW4gWWVsbGluZzwvdGV4dD48L3N2Zz4=' },
+                    { name: 'This is Fine', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI2ZmNzA0MyIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+VGhpcyBpcyBGaW5lPC90ZXh0Pjwvc3ZnPg==' },
+                    { name: 'Expanding Brain', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzM0ZDM5OSIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+RXhwYW5kaW5nIEJyYWluPC90ZXh0Pjwvc3ZnPg==' },
+                    { name: 'Stonks', url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzY2NjZmZiIvPjx0ZXh0IHg9IjMwMCIgeT0iMjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCI+U3RvbmtzPC90ZXh0Pjwvc3ZnPg==' }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.populateTemplates();
+                this.createDefaultTextElements();
+                this.selectTemplate(0);
+            }
+
+            setupEventListeners() {
+                // Template selection
+                document.getElementById('templatesGrid').addEventListener('click', (e) => {
+                    const templateItem = e.target.closest('.template-item');
+                    if (templateItem) {
+                        const index = parseInt(templateItem.dataset.index);
+                        this.selectTemplate(index);
+                    }
+                });
+
+                // File upload
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+
+                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    this.handleFileUpload(e.dataTransfer.files[0]);
+                });
+
+                fileInput.addEventListener('change', (e) => {
+                    this.handleFileUpload(e.target.files[0]);
+                });
+
+                // Text controls
+                document.getElementById('topText').addEventListener('input', () => this.updateText());
+                document.getElementById('bottomText').addEventListener('input', () => this.updateText());
+                document.getElementById('addTextBtn').addEventListener('click', () => this.addCustomTextElement());
+
+                // Style controls
+                document.getElementById('fontSize').addEventListener('input', (e) => {
+                    document.getElementById('fontSizeValue').textContent = e.target.value + 'px';
+                    this.updateText();
+                });
+                document.getElementById('textColor').addEventListener('input', () => this.updateText());
+                document.getElementById('strokeColor').addEventListener('input', () => this.updateText());
+                document.getElementById('fontFamily').addEventListener('change', () => this.updateText());
+
+                // Filter controls
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.applyFilter(e.target.dataset.filter);
+                    });
+                });
+
+                // Export controls
+                document.getElementById('downloadBtn').addEventListener('click', () => this.downloadMeme('png'));
+                document.getElementById('downloadJpgBtn').addEventListener('click', () => this.downloadMeme('jpeg'));
+                document.getElementById('shareBtn').addEventListener('click', () => this.copyToClipboard());
+
+                // Canvas interactions
+                this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+
+                // Set default filter
+                document.querySelector('.filter-btn[data-filter="none"]').classList.add('active');
+            }
+
+            populateTemplates() {
+                const grid = document.getElementById('templatesGrid');
+                grid.innerHTML = '';
+
+                this.templates.forEach((template, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'template-item';
+                    item.dataset.index = index;
+                    
+                    item.innerHTML = `
+                        <img src="${template.url}" alt="${template.name}" />
+                        <div class="template-name">${template.name}</div>
+                    `;
+                    
+                    grid.appendChild(item);
+                });
+            }
+
+            selectTemplate(index) {
+                document.querySelectorAll('.template-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                document.querySelector(`[data-index="${index}"]`).classList.add('selected');
+
+                const template = this.templates[index];
+                this.loadTemplate(template.url);
+            }
+
+            loadTemplate(url) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    this.currentTemplate = img;
+                    this.canvas.width = img.width;
+                    this.canvas.height = img.height;
+                    this.redraw();
+                };
+                img.src = url;
+            }
+
+            handleFileUpload(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.loadTemplate(e.target.result);
+                    document.querySelectorAll('.template-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+
+            createDefaultTextElements() {
+                this.textElements = [
+                    {
+                        id: 'top',
+                        text: '',
+                        x: 50,
+                        y: 50,
+                        width: 500,
+                        height: 60,
+                        fontSize: 40,
+                        color: '#ffffff',
+                        strokeColor: '#000000',
+                        fontFamily: 'Impact'
+                    },
+                    {
+                        id: 'bottom',
+                        text: '',
+                        x: 50,
+                        y: 320,
+                        width: 500,
+                        height: 60,
+                        fontSize: 40,
+                        color: '#ffffff',
+                        strokeColor: '#000000',
+                        fontFamily: 'Impact'
+                    }
+                ];
+            }
+
+            addCustomTextElement() {
+                const newElement = {
+                    id: `custom_${Date.now()}`,
+                    text: 'New Text',
+                    x: 150,
+                    y: 200,
+                    width: 300,
+                    height: 40,
+                    fontSize: 40,
+                    color: '#ffffff',
+                    strokeColor: '#000000',
+                    fontFamily: 'Impact'
+                };
+                
+                this.textElements.push(newElement);
+                this.selectedElement = newElement;
+                this.redraw();
+            }
+
+            updateText() {
+                const topText = document.getElementById('topText').value;
+                const bottomText = document.getElementById('bottomText').value;
+                const fontSize = parseInt(document.getElementById('fontSize').value);
+                const textColor = document.getElementById('textColor').value;
+                const strokeColor = document.getElementById('strokeColor').value;
+                const fontFamily = document.getElementById('fontFamily').value;
+
+                // Update default text elements
+                if (this.textElements[0]) {
+                    this.textElements[0].text = topText;
+                    this.textElements[0].fontSize = fontSize;
+                    this.textElements[0].color = textColor;
+                    this.textElements[0].strokeColor = strokeColor;
+                    this.textElements[0].fontFamily = fontFamily;
+                }
+
+                if (this.textElements[1]) {
+                    this.textElements[1].text = bottomText;
+                    this.textElements[1].fontSize = fontSize;
+                    this.textElements[1].color = textColor;
+                    this.textElements[1].strokeColor = strokeColor;
+                    this.textElements[1].fontFamily = fontFamily;
+                }
+
+                // Update selected element if it exists
+                if (this.selectedElement) {
+                    this.selectedElement.fontSize = fontSize;
+                    this.selectedElement.color = textColor;
+                    this.selectedElement.strokeColor = strokeColor;
+                    this.selectedElement.fontFamily = fontFamily;
+                }
+
+                this.redraw();
+            }
+
+            applyFilter(filterType) {
+                this.currentFilter = filterType;
+                this.redraw();
+            }
+
+            redraw() {
+                if (!this.currentTemplate) return;
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Apply filter to canvas
+                this.ctx.filter = this.getFilterString(this.currentFilter);
+                this.ctx.drawImage(this.currentTemplate, 0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.filter = 'none';
+
+                // Draw text elements
+                this.textElements.forEach(element => {
+                    if (element.text) {
+                        this.drawTextElement(element);
+                    }
+                });
+
+                // Draw watermark if enabled
+                if (document.getElementById('watermarkToggle').checked) {
+                    this.drawWatermark();
+                }
+            }
+
+            getFilterString(filterType) {
+                switch (filterType) {
+                    case 'sepia': return 'sepia(100%)';
+                    case 'grayscale': return 'grayscale(100%)';
+                    case 'contrast': return 'contrast(150%)';
+                    case 'brightness': return 'brightness(120%)';
+                    case 'blur': return 'blur(1px)';
+                    default: return 'none';
+                }
+            }
+
+            drawTextElement(element) {
+                this.ctx.save();
+                
+                this.ctx.font = `bold ${element.fontSize}px ${element.fontFamily}`;
+                this.ctx.fillStyle = element.color;
+                this.ctx.strokeStyle = element.strokeColor;
+                this.ctx.lineWidth = 3;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+
+                // Word wrapping
+                const words = element.text.toUpperCase().split(' ');
+                const lines = [];
+                let currentLine = '';
+
+                words.forEach(word => {
+                    const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                    const metrics = this.ctx.measureText(testLine);
+                    
+                    if (metrics.width > element.width && currentLine) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                });
+                
+                if (currentLine) {
+                    lines.push(currentLine);
+                }
+
+                // Draw lines
+                const lineHeight = element.fontSize * 1.2;
+                const totalHeight = lines.length * lineHeight;
+                const startY = element.y + element.height/2 - totalHeight/2 + lineHeight/2;
+
+                lines.forEach((line, index) => {
+                    const y = startY + index * lineHeight;
+                    const x = element.x + element.width/2;
+                    
+                    this.ctx.strokeText(line, x, y);
+                    this.ctx.fillText(line, x, y);
+                });
+
+                this.ctx.restore();
+            }
+
+            drawWatermark() {
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.font = '12px Arial';
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.strokeStyle = '#000000';
+                this.ctx.lineWidth = 1;
+                this.ctx.textAlign = 'right';
+                this.ctx.textBaseline = 'bottom';
+                
+                const text = 'MemeForge Pro';
+                const x = this.canvas.width - 10;
+                const y = this.canvas.height - 10;
+                
+                this.ctx.strokeText(text, x, y);
+                this.ctx.fillText(text, x, y);
+                this.ctx.restore();
+            }
+
+            handleMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+                // Check if clicking on resize handle
+                for (let element of this.textElements) {
+                    if (this.isPointInResizeHandle(x, y, element)) {
+                        this.resizeData = { element, startX: x, startY: y, startWidth: element.width, startHeight: element.height };
+                        return;
+                    }
+                }
+
+                // Check if clicking on text element
+                for (let element of this.textElements) {
+                    if (this.isPointInElement(x, y, element)) {
+                        this.selectedElement = element;
+                        this.dragData = { 
+                            element, 
+                            offsetX: x - element.x, 
+                            offsetY: y - element.y 
+                        };
+                        break;
+                    }
+                }
+            }
+
+            handleMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+                if (this.resizeData) {
+                    const { element, startX, startY, startWidth, startHeight } = this.resizeData;
+                    const deltaX = x - startX;
+                    const deltaY = y - startY;
+                    
+                    element.width = Math.max(100, startWidth + deltaX);
+                    element.height = Math.max(30, startHeight + deltaY);
+                    
+                    this.redraw();
+                } else if (this.dragData) {
+                    const { element, offsetX, offsetY } = this.dragData;
+                    element.x = Math.max(0, Math.min(this.canvas.width - element.width, x - offsetX));
+                    element.y = Math.max(0, Math.min(this.canvas.height - element.height, y - offsetY));
+                    
+                    this.redraw();
+                } else {
+                    // Update cursor based on hover state
+                    let cursor = 'default';
+                    for (let element of this.textElements) {
+                        if (this.isPointInResizeHandle(x, y, element)) {
+                            cursor = 'se-resize';
+                            break;
+                        } else if (this.isPointInElement(x, y, element)) {
+                            cursor = 'move';
+                            break;
+                        }
+                    }
+                    this.canvas.style.cursor = cursor;
+                }
+            }
+
+            handleMouseUp() {
+                this.dragData = null;
+                this.resizeData = null;
+                this.canvas.style.cursor = 'default';
+            }
+
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+                let elementFound = false;
+                for (let element of this.textElements) {
+                    if (this.isPointInElement(x, y, element)) {
+                        this.selectedElement = element;
+                        elementFound = true;
+                        break;
+                    }
+                }
+
+                if (!elementFound) {
+                    this.selectedElement = null;
+                }
+            }
+
+            isPointInElement(x, y, element) {
+                return x >= element.x && x <= element.x + element.width &&
+                       y >= element.y && y <= element.y + element.height;
+            }
+
+            isPointInResizeHandle(x, y, element) {
+                const handleX = element.x + element.width - 10;
+                const handleY = element.y + element.height - 10;
+                return x >= handleX && x <= handleX + 20 &&
+                       y >= handleY && y <= handleY + 20;
+            }
+
+            downloadMeme(format = 'png') {
+                const quality = parseFloat(document.getElementById('canvasQuality').value);
+                const dataURL = this.canvas.toDataURL(`image/${format}`, quality);
+                
+                const link = document.createElement('a');
+                link.download = `meme.${format}`;
+                link.href = dataURL;
+                
+                // Add loading animation
+                const btn = format === 'png' ? document.getElementById('downloadBtn') : document.getElementById('downloadJpgBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<div class="loading"></div> Generating...';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    link.click();
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 500);
+            }
+
+            async copyToClipboard() {
+                try {
+                    const btn = document.getElementById('shareBtn');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<div class="loading"></div> Copying...';
+                    btn.disabled = true;
+
+                    // Convert canvas to blob
+                    this.canvas.toBlob(async (blob) => {
+                        try {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                            
+                            btn.innerHTML = '✅ Copied!';
+                            setTimeout(() => {
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                            }, 2000);
+                        } catch (err) {
+                            console.error('Failed to copy to clipboard:', err);
+                            btn.innerHTML = '❌ Copy failed';
+                            setTimeout(() => {
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                            }, 2000);
+                        }
+                    });
+                } catch (err) {
+                    console.error('Clipboard API not supported:', err);
+                    
+                    // Fallback: download instead
+                    this.downloadMeme('png');
+                    
+                    const btn = document.getElementById('shareBtn');
+                    btn.innerHTML = '📥 Downloaded instead';
+                    setTimeout(() => {
+                        btn.innerHTML = '📤 Copy to Clipboard';
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            }
+        }
+
+        // Initialize the meme generator when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new MemeGenerator();
+        });
+
+        // Add some visual enhancements
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.createElement('div');
+            cursor.style.position = 'fixed';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.width = '4px';
+            cursor.style.height = '4px';
+            cursor.style.background = 'rgba(102, 126, 234, 0.6)';
+            cursor.style.borderRadius = '50%';
+            cursor.style.pointerEvents = 'none';
+            cursor.style.zIndex = '9999';
+            cursor.style.transition = 'all 0.1s ease';
+            
+            document.body.appendChild(cursor);
+            
+            setTimeout(() => {
+                if (cursor.parentNode) {
+                    cursor.remove();
+                }
+            }, 200);
+        });
+    </script>
+</body>
+</html>
