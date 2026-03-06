@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemeForge Pro - Advanced Text-to-Meme Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #0078d4, #00bcf2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr 300px;
+            gap: 2rem;
+            height: calc(100vh - 80px);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .panel h3 {
+            color: #0078d4;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .template-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .template-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 120, 212, 0.3);
+        }
+
+        .template-item.active {
+            border-color: #0078d4;
+            transform: scale(1.05);
+        }
+
+        .template-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-zone {
+            border: 2px dashed #0078d4;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone:hover {
+            background: rgba(0, 120, 212, 0.05);
+            border-color: #005a9e;
+        }
+
+        .upload-zone.dragover {
+            background: rgba(0, 120, 212, 0.1);
+            border-color: #00bcf2;
+        }
+
+        .canvas-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            background: #f8f9fa;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #memeCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            cursor: crosshair;
+        }
+
+        .text-overlay {
+            position: absolute;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            text-align: center;
+            cursor: move;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            min-width: 100px;
+            word-wrap: break-word;
+            user-select: none;
+            font-family: Impact, Arial Black, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .text-overlay:hover {
+            border-color: #0078d4;
+        }
+
+        .text-overlay.selected {
+            border-color: #00bcf2;
+            box-shadow: 0 0 0 2px rgba(0, 188, 242, 0.3);
+        }
+
+        .text-overlay .resize-handle {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background: #0078d4;
+            border-radius: 50%;
+            cursor: se-resize;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .text-overlay:hover .resize-handle,
+        .text-overlay.selected .resize-handle {
+            opacity: 1;
+        }
+
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #0078d4;
+            box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #0078d4, #00bcf2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 120, 212, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .slider-group {
+            margin-bottom: 1rem;
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e5e9;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0078d4;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0078d4;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);
+        }
+
+        .color-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preset-texts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preset-text {
+            padding: 0.5rem 0.75rem;
+            background: #f8f9fa;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-text:hover {
+            background: #0078d4;
+            color: white;
+            border-color: #0078d4;
+        }
+
+        .history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-item:hover {
+            background: #f8f9fa;
+        }
+
+        .history-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0078d4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: #28a745;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                height: auto;
+            }
+            
+            .panel {
+                max-height: none;
+            }
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .advanced-controls {
+            border-top: 1px solid #e1e5e9;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .font-preview {
+            font-size: 14px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1><i class="fas fa-magic"></i> MemeForge Pro</h1>
+    </header>
+
+    <div class="container">
+        <!-- Left Panel: Templates & Upload -->
+        <div class="panel">
+            <h3><i class="fas fa-images"></i> Meme Templates</h3>
+            
+            <div class="template-grid" id="templateGrid">
+                <!-- Templates will be loaded here -->
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <i class="fas fa-cloud-upload-alt fa-2x" style="color: #0078d4; margin-bottom: 0.5rem;"></i>
+                <p>Drop image here or click to upload</p>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="control-group">
+                <label>Quick Text Presets</label>
+                <div class="preset-texts" id="presetTexts">
+                    <span class="preset-text">When you...</span>
+                    <span class="preset-text">Me trying to...</span>
+                    <span class="preset-text">Nobody:</span>
+                    <span class="preset-text">Me:</span>
+                    <span class="preset-text">That moment when...</span>
+                    <span class="preset-text">POV:</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-history"></i> Recent Memes</h3>
+                <div class="history" id="memeHistory">
+                    <!-- History items will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel: Canvas -->
+        <div class="panel">
+            <div class="btn-group">
+                <button class="btn btn-primary" id="addTextBtn">
+                    <i class="fas fa-plus"></i> Add Text
+                </button>
+                <button class="btn btn-secondary" id="previewBtn">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-primary" id="downloadBtn">
+                    <i class="fas fa-download"></i> Download
+                </button>
+                <button class="btn btn-danger" id="clearBtn">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="memeCanvas" width="500" height="500"></canvas>
+                <div id="textOverlays"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Controls -->
+        <div class="panel">
+            <h3><i class="fas fa-cogs"></i> Text Controls</h3>
+            
+            <div class="control-group">
+                <label for="textInput">Text Content</label>
+                <textarea id="textInput" placeholder="Enter meme text here..."></textarea>
+            </div>
+
+            <div class="control-group">
+                <label for="fontFamily">Font Family</label>
+                <select id="fontFamily">
+                    <option value="Impact">Impact</option>
+                    <option value="Arial Black">Arial Black</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                </select>
+                <div class="font-preview" id="fontPreview">Sample Text</div>
+            </div>
+
+            <div class="filter-controls">
+                <div class="slider-group">
+                    <label>Font Size <span id="fontSizeValue">24</span>px</label>
+                    <input type="range" id="fontSize" class="slider" min="12" max="72" value="24">
+                </div>
+                
+                <div class="color-picker-group">
+                    <label>Text Color</label>
+                    <input type="color" id="textColor" class="color-picker" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Text Style</label>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="boldBtn" data-style="bold">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="btn btn-secondary" id="italicBtn" data-style="italic">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="btn btn-secondary" id="strokeBtn" data-style="stroke">
+                        <i class="fas fa-font"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="advanced-controls">
+                <h3><i class="fas fa-sliders-h"></i> Image Filters</h3>
+                
+                <div class="slider-group">
+                    <label>Brightness <span id="brightnessValue">100</span>%</label>
+                    <input type="range" id="brightness" class="slider" min="0" max="200" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <label>Contrast <span id="contrastValue">100</span>%</label>
+                    <input type="range" id="contrast" class="slider" min="0" max="200" value="100">
+                </div>
+
+                <div class="slider-group">
+                    <label>Saturation <span id="saturationValue">100</span>%</label>
+                    <input type="range" id="saturation" class="slider" min="0" max="200" value="100">
+                </div>
+
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="watermarkToggle" checked>
+                        Add Watermark
+                    </label>
+                </div>
+
+                <button class="btn btn-secondary" id="resetFilters" style="width: 100%;">
+                    <i class="fas fa-undo"></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        class MemeGenerator {
+            constructor() {
+                this.canvas = document.getElementById('memeCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.textOverlaysContainer = document.getElementById('textOverlays');
+                this.currentImage = null;
+                this.textOverlays = [];
+                this.selectedOverlay = null;
+                this.isDragging = false;
+                this.isResizing = false;
+                this.dragOffset = { x: 0, y: 0 };
+                this.history = [];
+                this.filters = {
+                    brightness: 100,
+                    contrast: 100,
+                    saturation: 100
+                };
+
+                this.templates = [
+                    'https://i.imgflip.com/1bij.jpg', // Drake
+                    'https://i.imgflip.com/2/30b1gx.jpg', // Expanding Brain
+                    'https://i.imgflip.com/261o3j.jpg', // Change My Mind
+                    'https://i.imgflip.com/1g8my4.jpg', // Distracted Boyfriend
+                    'https://i.imgflip.com/26am.jpg', // Angry Cat
+                    'https://i.imgflip.com/bh.jpg', // Y U No
+                    'https://i.imgflip.com/5c7lwq.png', // Bernie
+                    'https://i.imgflip.com/1otk96.jpg' // Panik
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.loadTemplates();
+                this.setupEventListeners();
+                this.loadDefaultImage();
+                this.loadHistory();
+            }
+
+            loadTemplates() {
+                const templateGrid = document.getElementById('templateGrid');
+                this.templates.forEach((src, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'template-item';
+                    item.innerHTML = `<img src="${src}" alt="Template ${index + 1}">`;
+                    item.addEventListener('click', () => this.selectTemplate(src, item));
+                    templateGrid.appendChild(item);
+                });
+            }
+
+            selectTemplate(src, element) {
+                document.querySelectorAll('.template-item').forEach(item => 
+                    item.classList.remove('active'));
+                element.classList.add('active');
+                this.loadImage(src);
+            }
+
+            loadImage(src) {
+                this.showLoading();
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    this.currentImage = img;
+                    this.resizeCanvas();
+                    this.render();
+                    this.hideLoading();
+                };
+                img.onerror = () => {
+                    this.hideLoading();
+                    this.showToast('Failed to load image', 'error');
+                };
+                img.src = src;
+            }
+
+            loadDefaultImage() {
+                this.loadImage(this.templates[0]);
+            }
+
+            resizeCanvas() {
+                if (!this.currentImage) return;
+
+                const maxWidth = 500;
+                const maxHeight = 500;
+                const ratio = Math.min(maxWidth / this.currentImage.width, maxHeight / this.currentImage.height);
+                
+                this.canvas.width = this.currentImage.width * ratio;
+                this.canvas.height = this.currentImage.height * ratio;
+                
+                this.textOverlaysContainer.style.width = this.canvas.width + 'px';
+                this.textOverlaysContainer.style.height = this.canvas.height + 'px';
+            }
+
+            render() {
+                if (!this.currentImage) return;
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Apply filters
+                this.ctx.filter = `brightness(${this.filters.brightness}%) contrast(${this.filters.contrast}%) saturate(${this.filters.saturation}%)`;
+                this.ctx.drawImage(this.currentImage, 0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.filter = 'none';
+
+                // Add watermark if enabled
+                if (document.getElementById('watermarkToggle').checked) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    this.ctx.fillRect(this.canvas.width - 120, this.canvas.height - 25, 115, 20);
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillText('MemeForge Pro', this.canvas.width - 115, this.canvas.height - 10);
+                    this.ctx.restore();
+                }
+            }
+
+            addTextOverlay() {
+                const overlay = document.createElement('div');
+                overlay.className = 'text-overlay';
+                overlay.innerHTML = `
+                    <span class="text-content">${document.getElementById('textInput').value || 'Sample Text'}</span>
+                    <div class="resize-handle"></div>
+                `;
+                
+                overlay.style.left = '50px';
+                overlay.style.top = '50px';
+                overlay.style.fontSize = document.getElementById('fontSize').value + 'px';
+                overlay.style.color = document.getElementById('textColor').value;
+                overlay.style.fontFamily = document.getElementById('fontFamily').value;
+
+                this.textOverlaysContainer.appendChild(overlay);
+                this.textOverlays.push(overlay);
+                this.selectTextOverlay(overlay);
+                this.setupTextOverlayEvents(overlay);
+            }
+
+            selectTextOverlay(overlay) {
+                this.textOverlays.forEach(o => o.classList.remove('selected'));
+                overlay.classList.add('selected');
+                this.selectedOverlay = overlay;
+                this.updateControlsFromOverlay(overlay);
+            }
+
+            updateControlsFromOverlay(overlay) {
+                const textContent = overlay.querySelector('.text-content').textContent;
+                const computedStyle = window.getComputedStyle(overlay);
+                
+                document.getElementById('textInput').value = textContent;
+                document.getElementById('fontSize').value = parseInt(computedStyle.fontSize);
+                document.getElementById('fontSizeValue').textContent = parseInt(computedStyle.fontSize);
+                document.getElementById('textColor').value = this.rgbToHex(computedStyle.color);
+                document.getElementById('fontFamily').value = computedStyle.fontFamily.replace(/['"]/g, '');
+            }
+
+            setupTextOverlayEvents(overlay) {
+                let isDragging = false;
+                let isResizing = false;
+                let startX, startY, startWidth, startHeight;
+
+                overlay.addEventListener('mousedown', (e) => {
+                    if (e.target.classList.contains('resize-handle')) {
+                        isResizing = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startWidth = parseInt(document.defaultView.getComputedStyle(overlay).width, 10);
+                        startHeight = parseInt(document.defaultView.getComputedStyle(overlay).height, 10);
+                    } else {
+                        isDragging = true;
+                        startX = e.clientX - overlay.offsetLeft;
+                        startY = e.clientY - overlay.offsetTop;
+                    }
+                    this.selectTextOverlay(overlay);
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        overlay.style.left = (e.clientX - startX) + 'px';
+                        overlay.style.top = (e.clientY - startY) + 'px';
+                    } else if (isResizing) {
+                        const width = startWidth + e.clientX - startX;
+                        const height = startHeight + e.clientY - startY;
+                        overlay.style.width = width + 'px';
+                        overlay.style.height = height + 'px';
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isDragging = false;
+                    isResizing = false;
+                });
+
+                overlay.addEventListener('dblclick', () => {
+                    const textContent = overlay.querySelector('.text-content');
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = textContent.textContent;
+                    input.style.background = 'transparent';
+                    input.style.border = 'none';
+                    input.style.color = 'inherit';
+                    input.style.font = 'inherit';
+                    input.style.width = '100%';
+                    
+                    textContent.style.display = 'none';
+                    overlay.appendChild(input);
+                    input.focus();
+                    input.select();
+
+                    const finishEdit = () => {
+                        textContent.textContent = input.value;
+                        textContent.style.display = 'block';
+                        overlay.removeChild(input);
+                        document.getElementById('textInput').value = input.value;
+                    };
+
+                    input.addEventListener('blur', finishEdit);
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') finishEdit();
+                    });
+                });
+            }
+
+            updateSelectedOverlay() {
+                if (!this.selectedOverlay) return;
+
+                const textContent = this.selectedOverlay.querySelector('.text-content');
+                textContent.textContent = document.getElementById('textInput').value;
+                this.selectedOverlay.style.fontSize = document.getElementById('fontSize').value + 'px';
+                this.selectedOverlay.style.color = document.getElementById('textColor').value;
+                this.selectedOverlay.style.fontFamily = document.getElementById('fontFamily').value;
+            }
+
+            setupEventListeners() {
+                // Upload handling
+                const uploadZone = document.getElementById('uploadZone');
+                const imageUpload = document.getElementById('imageUpload');
+
+                uploadZone.addEventListener('click', () => imageUpload.click());
+                uploadZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.add('dragover');
+                });
+                uploadZone.addEventListener('dragleave', () => {
+                    uploadZone.classList.remove('dragover');
+                });
+                uploadZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadZone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) this.handleImageUpload(files[0]);
+                });
+
+                imageUpload.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.handleImageUpload(e.target.files[0]);
+                    }
+                });
+
+                // Button events
+                document.getElementById('addTextBtn').addEventListener('click', () => this.addTextOverlay());
+                document.getElementById('downloadBtn').addEventListener('click', () => this.downloadMeme());
+                document.getElementById('clearBtn').addEventListener('click', () => this.clearAllText());
+                document.getElementById('previewBtn').addEventListener('click', () => this.previewMeme());
+
+                // Text controls
+                document.getElementById('textInput').addEventListener('input', () => this.updateSelectedOverlay());
+                document.getElementById('fontSize').addEventListener('input', (e) => {
+                    document.getElementById('fontSizeValue').textContent = e.target.value;
+                    this.updateSelectedOverlay();
+                });
+                document.getElementById('textColor').addEventListener('change', () => this.updateSelectedOverlay());
+                document.getElementById('fontFamily').addEventListener('change', () => {
+                    this.updateSelectedOverlay();
+                    this.updateFontPreview();
+                });
+
+                // Filter controls
+                document.getElementById('brightness').addEventListener('input', (e) => {
+                    this.filters.brightness = e.target.value;
+                    document.getElementById('brightnessValue').textContent = e.target.value;
+                    this.render();
+                });
+                document.getElementById('contrast').addEventListener('input', (e) => {
+                    this.filters.contrast = e.target.value;
+                    document.getElementById('contrastValue').textContent = e.target.value;
+                    this.render();
+                });
+                document.getElementById('saturation').addEventListener('input', (e) => {
+                    this.filters.saturation = e.target.value;
+                    document.getElementById('saturationValue').textContent = e.target.value;
+                    this.render();
+                });
+
+                document.getElementById('resetFilters').addEventListener('click', () => this.resetFilters());
+
+                // Style buttons
+                document.querySelectorAll('[data-style]').forEach(btn => {
+                    btn.addEventListener('click', () => this.toggleTextStyle(btn.dataset.style, btn));
+                });
+
+                // Preset texts
+                document.querySelectorAll('.preset-text').forEach(preset => {
+                    preset.addEventListener('click', () => {
+                        document.getElementById('textInput').value = preset.textContent;
+                        this.updateSelectedOverlay();
+                    });
+                });
+
+                // Canvas click to add text
+                this.canvas.addEventListener('click', (e) => {
+                    if (!this.selectedOverlay && e.target === this.canvas) {
+                        this.addTextOverlay();
+                        const rect = this.canvas.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        this.selectedOverlay.style.left = x + 'px';
+                        this.selectedOverlay.style.top = y + 'px';
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Delete' && this.selectedOverlay) {
+                        this.removeTextOverlay(this.selectedOverlay);
+                    }
+                    if (e.ctrlKey || e.metaKey) {
+                        switch(e.key) {
+                            case 's':
+                                e.preventDefault();
+                                this.downloadMeme();
+                                break;
+                            case 'z':
+                                e.preventDefault();
+                                // Undo functionality could be implemented here
+                                break;
+                        }
+                    }
+                });
+
+                this.updateFontPreview();
+            }
+
+            handleImageUpload(file) {
+                if (!file.type.startsWith('image/')) {
+                    this.showToast('Please select a valid image file', 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.loadImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            updateFontPreview() {
+                const preview = document.getElementById('fontPreview');
+                const fontFamily = document.getElementById('fontFamily').value;
+                preview.style.fontFamily = fontFamily;
+                preview.textContent = `Sample Text (${fontFamily})`;
+            }
+
+            toggleTextStyle(style, button) {
+                if (!this.selectedOverlay) return;
+
+                button.classList.toggle('btn-primary');
+                button.classList.toggle('btn-secondary');
+
+                switch(style) {
+                    case 'bold':
+                        const currentWeight = this.selectedOverlay.style.fontWeight;
+                        this.selectedOverlay.style.fontWeight = currentWeight === 'bold' ? 'normal' : 'bold';
+                        break;
+                    case 'italic':
+                        const currentStyle = this.selectedOverlay.style.fontStyle;
+                        this.selectedOverlay.style.fontStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+                        break;
+                    case 'stroke':
+                        const currentStroke = this.selectedOverlay.style.textShadow;
+                        this.selectedOverlay.style.textShadow = currentStroke.includes('stroke') ? 
+                            '2px 2px 4px rgba(0, 0, 0, 0.8)' : 
+                            '2px 2px 4px rgba(0, 0, 0, 0.8), -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000';
+                        break;
+                }
+            }
+
+            removeTextOverlay(overlay) {
+                const index = this.textOverlays.indexOf(overlay);
+                if (index > -1) {
+                    this.textOverlays.splice(index, 1);
+                    overlay.remove();
+                    this.selectedOverlay = null;
+                }
+            }
+
+            clearAllText() {
+                this.textOverlays.forEach(overlay => overlay.remove());
+                this.textOverlays = [];
+                this.selectedOverlay = null;
+            }
+
+            resetFilters() {
+                this.filters = { brightness: 100, contrast: 100, saturation: 100 };
+                document.getElementById('brightness').value = 100;
+                document.getElementById('contrast').value = 100;
+                document.getElementById('saturation').value = 100;
+                document.getElementById('brightnessValue').textContent = '100';
+                document.getElementById('contrastValue').textContent = '100';
+                document.getElementById('saturationValue').textContent = '100';
+                this.render();
+            }
+
+            previewMeme() {
+                const finalCanvas = this.generateFinalCanvas();
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(`
+                    <html>
+                        <head><title>Meme Preview</title></head>
+                        <body style="margin:0;padding:20px;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;">
+                            <div style="background:white;padding:20px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                                <h2 style="text-align:center;margin-bottom:20px;">Your Meme</h2>
+                                <img src="${finalCanvas.toDataURL()}" style="max-width:100%;height:auto;border-radius:8px;">
+                            </div>
+                        </body>
+                    </html>
+                `);
+            }
+
+            downloadMeme() {
+                this.showLoading();
+                
+                setTimeout(() => {
+                    const finalCanvas = this.generateFinalCanvas();
+                    const link = document.createElement('a');
+                    link.download = `meme-${Date.now()}.png`;
+                    link.href = finalCanvas.toDataURL();
+                    link.click();
+                    
+                    this.saveToHistory(finalCanvas.toDataURL());
+                    this.hideLoading();
+                    this.showToast('Meme downloaded successfully!');
+                }, 500);
+            }
+
+            generateFinalCanvas() {
+                const finalCanvas = document.createElement('canvas');
+                const finalCtx = finalCanvas.getContext('2d');
+                
+                finalCanvas.width = this.canvas.width;
+                finalCanvas.height = this.canvas.height;
+                
+                // Draw the background image with filters
+                finalCtx.filter = `brightness(${this.filters.brightness}%) contrast(${this.filters.contrast}%) saturate(${this.filters.saturation}%)`;
+                finalCtx.drawImage(this.currentImage, 0, 0, finalCanvas.width, finalCanvas.height);
+                finalCtx.filter = 'none';
+
+                // Draw text overlays
+                this.textOverlays.forEach(overlay => {
+                    const rect = overlay.getBoundingClientRect();
+                    const canvasRect = this.canvas.getBoundingClientRect();
+                    
+                    const x = rect.left - canvasRect.left;
+                    const y = rect.top - canvasRect.top;
+                    
+                    const computedStyle = window.getComputedStyle(overlay);
+                    const text = overlay.querySelector('.text-content').textContent;
+                    
+                    finalCtx.fillStyle = computedStyle.color;
+                    finalCtx.font = `${computedStyle.fontWeight} ${computedStyle.fontStyle} ${computedStyle.fontSize} ${computedStyle.fontFamily}`;
+                    finalCtx.textAlign = 'center';
+                    finalCtx.textBaseline = 'middle';
+                    
+                    // Add text shadow/stroke
+                    if (computedStyle.textShadow.includes('stroke')) {
+                        finalCtx.strokeStyle = '#000';
+                        finalCtx.lineWidth = 2;
+                        finalCtx.strokeText(text, x + rect.width/2, y + rect.height/2);
+                    }
+                    
+                    finalCtx.fillText(text, x + rect.width/2, y + rect.height/2);
+                });
+
+                // Add watermark if enabled
+                if (document.getElementById('watermarkToggle').checked) {
+                    finalCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    finalCtx.fillRect(finalCanvas.width - 120, finalCanvas.height - 25, 115, 20);
+                    finalCtx.fillStyle = 'white';
+                    finalCtx.font = '12px Arial';
+                    finalCtx.textAlign = 'left';
+                    finalCtx.fillText('MemeForge Pro', finalCanvas.width - 115, finalCanvas.height - 10);
+                }
+
+                return finalCanvas;
+            }
+
+            saveToHistory(dataUrl) {
+                const historyItem = {
+                    id: Date.now(),
+                    dataUrl: dataUrl,
+                    timestamp: new Date().toLocaleString()
+                };
+                
+                this.history.unshift(historyItem);
+                if (this.history.length > 10) {
+                    this.history = this.history.slice(0, 10);
+                }
+                
+                this.updateHistoryDisplay();
+                this.saveHistoryToStorage();
+            }
+
+            loadHistory() {
+                const saved = localStorage.getItem('memeHistory');
+                if (saved) {
+                    this.history = JSON.parse(saved);
+                    this.updateHistoryDisplay();
+                }
+            }
+
+            saveHistoryToStorage() {
+                localStorage.setItem('memeHistory', JSON.stringify(this.history));
+            }
+
+            updateHistoryDisplay() {
+                const historyContainer = document.getElementById('memeHistory');
+                historyContainer.innerHTML = '';
+                
+                this.history.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <img src="${item.dataUrl}" alt="Meme">
+                        <div>
+                            <div style="font-size: 0.8rem; font-weight: 500;">Meme #${item.id}</div>
+                            <div style="font-size: 0.7rem; color: #666;">${item.timestamp}</div>
+                        </div>
+                    `;
+                    
+                    historyItem.addEventListener('click', () => {
+                        const link = document.createElement('a');
+                        link.download = `meme-${item.id}.png`;
+                        link.href = item.dataUrl;
+                        link.click();
+                    });
+                    
+                    historyContainer.appendChild(historyItem);
+                });
+            }
+
+            showLoading() {
+                document.getElementById('loading').classList.add('show');
+            }
+
+            hideLoading() {
+                document.getElementById('loading').classList.remove('show');
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.className = `toast ${type} show`;
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            rgbToHex(rgb) {
+                const result = rgb.match(/\d+/g);
+                if (!result) return '#ffffff';
+                
+                const r = parseInt(result[0]);
+                const g = parseInt(result[1]);
+                const b = parseInt(result[2]);
+                
+                return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new MemeGenerator();
+        });
+    </script>
+</body>
+</html>
