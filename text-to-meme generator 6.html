@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemeForge Pro - Advanced Meme Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr 320px;
+            gap: 2rem;
+            min-height: calc(100vh - 100px);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: fit-content;
+        }
+
+        .panel h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .template-card {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            aspect-ratio: 1;
+        }
+
+        .template-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .template-card.selected {
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3);
+        }
+
+        .template-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .template-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            color: white;
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .canvas-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 2rem;
+        }
+
+        #memeCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .text-overlay {
+            position: absolute;
+            color: white;
+            font-weight: 900;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8);
+            cursor: move;
+            user-select: none;
+            font-family: Impact, Arial Black, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.1;
+            border: 2px dashed transparent;
+            padding: 4px;
+            min-width: 100px;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .text-overlay:hover, .text-overlay.selected {
+            border-color: #4299e1;
+            background: rgba(66, 153, 225, 0.1);
+        }
+
+        .text-overlay .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #4299e1;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: se-resize;
+            bottom: -6px;
+            right: -6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .text-overlay:hover .resize-handle,
+        .text-overlay.selected .resize-handle {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #718096, #4a5568);
+            box-shadow: 0 2px 8px rgba(113, 128, 150, 0.3);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4299e1;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #4299e1;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: #4299e1;
+            background: #f7fafc;
+        }
+
+        .filter-btn.active {
+            border-color: #4299e1;
+            background: #ebf8ff;
+            color: #2b6cb0;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f7fafc;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #4299e1;
+            background: #ebf8ff;
+            transform: scale(1.02);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+            margin-left: 0.5rem;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #4299e1;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .layer-item:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .layer-item.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .layer-btn {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            background: #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: background 0.3s ease;
+        }
+
+        .layer-btn:hover {
+            background: #cbd5e0;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .panel {
+                margin-bottom: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .templates-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .history-panel {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: #f7fafc;
+        }
+
+        .history-thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <header class="header">
+        <h1>🎭 MemeForge Pro</h1>
+    </header>
+
+    <div class="container">
+        <!-- Left Panel - Templates & Upload -->
+        <div class="panel">
+            <h3>📚 Meme Templates</h3>
+            <div class="templates-grid" id="templatesGrid"></div>
+            
+            <h3>📁 Upload Custom Image</h3>
+            <div class="upload-area" id="uploadArea">
+                <p>📎 Drop image here or click to browse</p>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            </div>
+
+            <h3>🕰️ Recent Creations</h3>
+            <div class="history-panel" id="historyPanel">
+                <p style="text-align: center; color: #718096; font-size: 0.9rem;">No memes created yet</p>
+            </div>
+        </div>
+
+        <!-- Center Panel - Canvas -->
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <canvas id="memeCanvas" width="600" height="600"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="addTextElement()">➕ Add Text</button>
+                <button class="btn secondary" onclick="clearCanvas()">🗑️ Clear All</button>
+                <button class="btn" onclick="downloadMeme()">💾 Download</button>
+                <button class="btn secondary" onclick="undoLastAction()">↶ Undo</button>
+                <button class="btn secondary" onclick="redoLastAction()">↷ Redo</button>
+            </div>
+        </div>
+
+        <!-- Right Panel - Controls -->
+        <div class="panel">
+            <h3>✏️ Text Properties</h3>
+            <div class="form-group">
+                <label>Text Content</label>
+                <input type="text" class="form-control" id="textInput" placeholder="Enter meme text..." oninput="updateSelectedText()">
+            </div>
+
+            <div class="form-group">
+                <label>Font Size</label>
+                <div class="slider-group">
+                    <input type="range" class="slider" id="fontSizeSlider" min="12" max="80" value="36" oninput="updateTextStyle()">
+                    <span class="slider-value" id="fontSizeValue">36</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Text Color</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" class="color-picker" id="textColor" value="#ffffff" onchange="updateTextStyle()">
+                    <span>Text</span>
+                    <input type="color" class="color-picker" id="strokeColor" value="#000000" onchange="updateTextStyle()">
+                    <span>Outline</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Stroke Width</label>
+                <div class="slider-group">
+                    <input type="range" class="slider" id="strokeWidthSlider" min="0" max="8" value="3" oninput="updateTextStyle()">
+                    <span class="slider-value" id="strokeWidthValue">3</span>
+                </div>
+            </div>
+
+            <h3>🎨 Image Filters</h3>
+            <div class="filter-grid">
+                <button class="filter-btn active" onclick="applyFilter('none')">None</button>
+                <button class="filter-btn" onclick="applyFilter('grayscale')">B&W</button>
+                <button class="filter-btn" onclick="applyFilter('sepia')">Sepia</button>
+                <button class="filter-btn" onclick="applyFilter('blur')">Blur</button>
+                <button class="filter-btn" onclick="applyFilter('brightness')">Bright</button>
+                <button class="filter-btn" onclick="applyFilter('contrast')">Contrast</button>
+                <button class="filter-btn" onclick="applyFilter('saturate')">Vibrant</button>
+                <button class="filter-btn" onclick="applyFilter('vintage')">Vintage</button>
+            </div>
+
+            <h3>⚙️ Settings</h3>
+            <div class="form-group">
+                <label>
+                    Watermark
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="watermarkToggle" checked onchange="toggleWatermark()">
+                        <span class="toggle-slider"></span>
+                    </div>
+                </label>
+            </div>
+
+            <h3>📋 Layers</h3>
+            <div id="layersPanel">
+                <p style="text-align: center; color: #718096; font-size: 0.9rem;">No text elements</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let canvas, ctx;
+        let currentTemplate = null;
+        let textElements = [];
+        let selectedElement = null;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOffset = { x: 0, y: 0 };
+        let currentFilter = 'none';
+        let showWatermark = true;
+        let actionHistory = [];
+        let historyIndex = -1;
+        let memeHistory = [];
+
+        // Popular meme templates
+        const templates = [
+            { name: 'Drake Pointing', url: 'https://i.imgflip.com/30b1gx.jpg' },
+            { name: 'Distracted Boyfriend', url: 'https://i.imgflip.com/1ur9b0.jpg' },
+            { name: 'Woman Yelling at Cat', url: 'https://i.imgflip.com/345v97.jpg' },
+            { name: 'Two Buttons', url: 'https://i.imgflip.com/1g8my4.jpg' },
+            { name: 'Change My Mind', url: 'https://i.imgflip.com/24y43o.jpg' },
+            { name: 'This Is Fine', url: 'https://i.imgflip.com/26am.jpg' },
+            { name: 'Mocking SpongeBob', url: 'https://i.imgflip.com/1otk96.jpg' },
+            { name: 'Expanding Brain', url: 'https://i.imgflip.com/1jwhww.jpg' }
+        ];
+
+        // Initialize the application
+        function init() {
+            canvas = document.getElementById('memeCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+            loadTemplates();
+            drawCanvas();
+            saveState();
+        }
+
+        function setupEventListeners() {
+            // Canvas events
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('click', handleCanvasClick);
+
+            // Upload area events
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Keyboard events
+            document.addEventListener('keydown', handleKeyDown);
+        }
+
+        function loadTemplates() {
+            const grid = document.getElementById('templatesGrid');
+            
+            templates.forEach((template, index) => {
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                card.innerHTML = `
+                    <img src="${template.url}" alt="${template.name}" crossorigin="anonymous">
+                    <div class="template-name">${template.name}</div>
+                `;
+                card.addEventListener('click', () => selectTemplate(template, card));
+                grid.appendChild(card);
+            });
+        }
+
+        function selectTemplate(template, cardElement) {
+            // Remove previous selection
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select new template
+            cardElement.classList.add('selected');
+            loadTemplate(template.url);
+        }
+
+        function loadTemplate(imageUrl) {
+            showLoading(true);
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = function() {
+                currentTemplate = img;
+                
+                // Resize canvas to match image aspect ratio
+                const maxWidth = 600;
+                const maxHeight = 600;
+                let { width, height } = img;
+                
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                drawCanvas();
+                saveState();
+                showLoading(false);
+                showToast('Template loaded successfully!');
+            };
+            
+            img.onerror = function() {
+                showLoading(false);
+                showToast('Failed to load template', 'error');
+            };
+            
+            img.src = imageUrl;
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Apply filters to the entire canvas
+            ctx.filter = getFilterCSS();
+            
+            // Draw template image
+            if (currentTemplate) {
+                ctx.drawImage(currentTemplate, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // Reset filter for text
+            ctx.filter = 'none';
+            
+            // Draw text elements
+            textElements.forEach(element => {
+                drawTextElement(element);
+            });
+            
+            // Draw watermark
+            if (showWatermark) {
+                drawWatermark();
+            }
+        }
+
+        function drawTextElement(element) {
+            ctx.save();
+            
+            ctx.font = `${element.fontSize}px Impact, Arial Black, sans-serif`;
+            ctx.fillStyle = element.color;
+            ctx.strokeStyle = element.strokeColor;
+            ctx.lineWidth = element.strokeWidth;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Text shadow for better readability
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            const lines = element.text.split('\n');
+            lines.forEach((line, index) => {
+                const y = element.y + (index - (lines.length - 1) / 2) * element.fontSize * 1.1;
+                
+                if (element.strokeWidth > 0) {
+                    ctx.strokeText(line, element.x, y);
+                }
+                ctx.fillText(line, element.x, y);
+            });
+            
+            ctx.restore();
+        }
+
+        function drawWatermark() {
+            ctx.save();
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(canvas.width - 120, canvas.height - 25, 115, 20);
+            ctx.fillStyle = 'white';
+            ctx.fillText('MemeForge Pro', canvas.width - 110, canvas.height - 12);
+            ctx.restore();
+        }
+
+        function addTextElement() {
+            const newElement = {
+                id: Date.now(),
+                text: 'SAMPLE TEXT',
+                x: canvas.width / 2,
+                y: canvas.height / 4,
+                fontSize: 36,
+                color: '#ffffff',
+                strokeColor: '#000000',
+                strokeWidth: 3
+            };
+            
+            textElements.push(newElement);
+            selectedElement = newElement;
+            updateUI();
+            drawCanvas();
+            saveState();
+        }
+
+        function updateSelectedText() {
+            if (selectedElement) {
+                selectedElement.text = document.getElementById('textInput').value.toUpperCase();
+                drawCanvas();
+            }
+        }
+
+        function updateTextStyle() {
+            if (selectedElement) {
+                selectedElement.fontSize = parseInt(document.getElementById('fontSizeSlider').value);
+                selectedElement.color = document.getElementById('textColor').value;
+                selectedElement.strokeColor = document.getElementById('strokeColor').value;
+                selectedElement.strokeWidth = parseInt(document.getElementById('strokeWidthSlider').value);
+                
+                document.getElementById('fontSizeValue').textContent = selectedElement.fontSize;
+                document.getElementById('strokeWidthValue').textContent = selectedElement.strokeWidth;
+                
+                drawCanvas();
+            }
+        }
+
+        function applyFilter(filterType) {
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            currentFilter = filterType;
+            drawCanvas();
+            saveState();
+        }
+
+        function getFilterCSS() {
+            switch (currentFilter) {
+                case 'grayscale': return 'grayscale(100%)';
+                case 'sepia': return 'sepia(100%)';
+                case 'blur': return 'blur(1px)';
+                case 'brightness': return 'brightness(1.3)';
+                case 'contrast': return 'contrast(1.3)';
+                case 'saturate': return 'saturate(1.5)';
+                case 'vintage': return 'sepia(30%) contrast(1.2) brightness(0.9)';
+                default: return 'none';
+            }
+        }
+
+        function toggleWatermark() {
+            showWatermark = document.getElementById('watermarkToggle').checked;
+            drawCanvas();
+        }
+
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if clicking on a text element
+            for (let i = textElements.length - 1; i >= 0; i--) {
+                const element = textElements[i];
+                const textWidth = ctx.measureText(element.text).width;
+                const textHeight = element.fontSize;
+                
+                if (x >= element.x - textWidth/2 - 10 && 
+                    x <= element.x + textWidth/2 + 10 && 
+                    y >= element.y - textHeight/2 - 10 && 
+                    y <= element.y + textHeight/2 + 10) {
+                    
+                    selectedElement = element;
+                    isDragging = true;
+                    dragOffset.x = x - element.x;
+                    dragOffset.y = y - element.y;
+                    updateUI();
+                    break;
+                }
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (isDragging && selectedElement) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                selectedElement.x = x - dragOffset.x;
+                selectedElement.y = y - dragOffset.y;
+                
+                // Keep text within canvas bounds
+                selectedElement.x = Math.max(50, Math.min(canvas.width - 50, selectedElement.x));
+                selectedElement.y = Math.max(20, Math.min(canvas.height - 20, selectedElement.y));
+                
+                drawCanvas();
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                saveState();
+            }
+        }
+
+        function handleCanvasClick(e) {
+            if (!isDragging) {
+                // Deselect if clicking on empty area
+                selectedElement = null;
+                updateUI();
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Delete' && selectedElement) {
+                deleteSelectedElement();
+            } else if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                undoLastAction();
+            } else if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                redoLastAction();
+            }
+        }
+
+        function deleteSelectedElement() {
+            if (selectedElement) {
+                const index = textElements.indexOf(selectedElement);
+                if (index > -1) {
+                    textElements.splice(index, 1);
+                    selectedElement = null;
+                    updateUI();
+                    drawCanvas();
+                    saveState();
+                }
+            }
+        }
+
+        function clearCanvas() {
+            if (confirm('Are you sure you want to clear all text elements?')) {
+                textElements = [];
+                selectedElement = null;
+                updateUI();
+                drawCanvas();
+                saveState();
+            }
+        }
+
+        function updateUI() {
+            // Update text input
+            const textInput = document.getElementById('textInput');
+            if (selectedElement) {
+                textInput.value = selectedElement.text;
+                document.getElementById('fontSizeSlider').value = selectedElement.fontSize;
+                document.getElementById('fontSizeValue').textContent = selectedElement.fontSize;
+                document.getElementById('textColor').value = selectedElement.color;
+                document.getElementById('strokeColor').value = selectedElement.strokeColor;
+                document.getElementById('strokeWidthSlider').value = selectedElement.strokeWidth;
+                document.getElementById('strokeWidthValue').textContent = selectedElement.strokeWidth;
+            } else {
+                textInput.value = '';
+            }
+            
+            updateLayersPanel();
+        }
+
+        function updateLayersPanel() {
+            const panel = document.getElementById('layersPanel');
+            
+            if (textElements.length === 0) {
+                panel.innerHTML = '<p style="text-align: center; color: #718096; font-size: 0.9rem;">No text elements</p>';
+                return;
+            }
+            
+            panel.innerHTML = '';
+            textElements.forEach((element, index) => {
+                const layerItem = document.createElement('div');
+                layerItem.className = `layer-item ${element === selectedElement ? 'selected' : ''}`;
+                layerItem.innerHTML = `
+                    <span>Text ${index + 1}: ${element.text.substring(0, 15)}${element.text.length > 15 ? '...' : ''}</span>
+                    <div class="layer-controls">
+                        <button class="layer-btn" onclick="moveLayer(${index}, 'up')">↑</button>
+                        <button class="layer-btn" onclick="moveLayer(${index}, 'down')">↓</button>
+                        <button class="layer-btn" onclick="selectLayer(${index})">✓</button>
+                        <button class="layer-btn" onclick="deleteLayer(${index})">✕</button>
+                    </div>
+                `;
+                panel.appendChild(layerItem);
+            });
+        }
+
+        function selectLayer(index) {
+            selectedElement = textElements[index];
+            updateUI();
+            drawCanvas();
+        }
+
+        function deleteLayer(index) {
+            textElements.splice(index, 1);
+            if (selectedElement === textElements[index]) {
+                selectedElement = null;
+            }
+            updateUI();
+            drawCanvas();
+            saveState();
+        }
+
+        function moveLayer(index, direction) {
+            if (direction === 'up' && index > 0) {
+                [textElements[index], textElements[index - 1]] = [textElements[index - 1], textElements[index]];
+            } else if (direction === 'down' && index < textElements.length - 1) {
+                [textElements[index], textElements[index + 1]] = [textElements[index + 1], textElements[index]];
+            }
+            updateUI();
+            drawCanvas();
+            saveState();
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.target.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+
+        function handleFileUpload(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select an image file', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                loadTemplate(e.target.result);
+            };
+            
+            reader.onerror = function() {
+                showLoading(false);
+                showToast('Failed to load image', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function downloadMeme() {
+            // Create temporary canvas without watermark if disabled
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            
+            // Draw everything
+            tempCtx.filter = getFilterCSS();
+            if (currentTemplate) {
+                tempCtx.drawImage(currentTemplate, 0, 0, canvas.width, canvas.height);
+            }
+            
+            tempCtx.filter = 'none';
+            textElements.forEach(element => {
+                drawTextElementOnContext(tempCtx, element);
+            });
+            
+            if (showWatermark) {
+                drawWatermarkOnContext(tempCtx);
+            }
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `meme-${Date.now()}.png`;
+            link.href = tempCanvas.toDataURL();
+            link.click();
+            
+            // Save to history
+            saveMemeToHistory(tempCanvas.toDataURL());
+            showToast('Meme downloaded successfully!');
+        }
+
+        function drawTextElementOnContext(ctx, element) {
+            ctx.save();
+            
+            ctx.font = `${element.fontSize}px Impact, Arial Black, sans-serif`;
+            ctx.fillStyle = element.color;
+            ctx.strokeStyle = element.strokeColor;
+            ctx.lineWidth = element.strokeWidth;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            const lines = element.text.split('\n');
+            lines.forEach((line, index) => {
+                const y = element.y + (index - (lines.length - 1) / 2) * element.fontSize * 1.1;
+                
+                if (element.strokeWidth > 0) {
+                    ctx.strokeText(line, element.x, y);
+                }
+                ctx.fillText(line, element.x, y);
+            });
+            
+            ctx.restore();
+        }
+
+        function drawWatermarkOnContext(ctx) {
+            ctx.save();
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(canvas.width - 120, canvas.height - 25, 115, 20);
+            ctx.fillStyle = 'white';
+            ctx.fillText('MemeForge Pro', canvas.width - 110, canvas.height - 12);
+            ctx.restore();
+        }
+
+        function saveState() {
+            const state = {
+                textElements: JSON.parse(JSON.stringify(textElements)),
+                currentFilter: currentFilter,
+                showWatermark: showWatermark,
+                templateData: currentTemplate ? canvas.toDataURL() : null
+            };
+            
+            // Remove future history if we're not at the end
+            actionHistory = actionHistory.slice(0, historyIndex + 1);
+            actionHistory.push(state);
+            historyIndex++;
+            
+            // Limit history to 20 actions
+            if (actionHistory.length > 20) {
+                actionHistory.shift();
+                historyIndex--;
+            }
+        }
+
+        function undoLastAction() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(actionHistory[historyIndex]);
+                showToast('Undo successful');
+            }
+        }
+
+        function redoLastAction() {
+            if (historyIndex < actionHistory.length - 1) {
+                historyIndex++;
+                restoreState(actionHistory[historyIndex]);
+                showToast('Redo successful');
+            }
+        }
+
+        function restoreState(state) {
+            textElements = JSON.parse(JSON.stringify(state.textElements));
+            currentFilter = state.currentFilter;
+            showWatermark = state.showWatermark;
+            selectedElement = null;
+            
+            // Update UI controls
+            document.getElementById('watermarkToggle').checked = showWatermark;
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="applyFilter('${currentFilter}')"]`).classList.add('active');
+            
+            updateUI();
+            drawCanvas();
+        }
+
+        function saveMemeToHistory(dataUrl) {
+            const historyItem = {
+                id: Date.now(),
+                dataUrl: dataUrl,
+                timestamp: new Date().toLocaleString()
+            };
+            
+            memeHistory.unshift(historyItem);
+            
+            // Limit to 10 items
+            if (memeHistory.length > 10) {
+                memeHistory = memeHistory.slice(0, 10);
+            }
+            
+            updateHistoryPanel();
+        }
+
+        function updateHistoryPanel() {
+            const panel = document.getElementById('historyPanel');
+            
+            if (memeHistory.length === 0) {
+                panel.innerHTML = '<p style="text-align: center; color: #718096; font-size: 0.9rem;">No memes created yet</p>';
+                return;
+            }
+            
+            panel.innerHTML = '';
+            memeHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <img src="${item.dataUrl}" alt="Meme" class="history-thumbnail">
+                    <div>
+                        <div style="font-size: 0.8rem; font-weight: 600;">Meme #${item.id.toString().slice(-4)}</div>
+                        <div style="font-size: 0.7rem; color: #718096;">${item.timestamp}</div>
+                    </div>
+                `;
+                historyItem.addEventListener('click', () => {
+                    const link = document.createElement('a');
+                    link.href = item.dataUrl;
+                    link.download = `meme-${item.id}.png`;
+                    link.click();
+                });
+                panel.appendChild(historyItem);
+            });
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('show');
+            } else {
+                loading.classList.remove('show');
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            if (type === 'error') {
+                toast.style.background = '#e53e3e';
+            }
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // Initialize the application when the page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
